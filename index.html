@@ -67,8 +67,12 @@
                 </p>
                 <h2 id="what">What are attestations?</h2>
                 <p>
-                    Attestations are like PGP signatures, except designed to be verifiable by
-                    the index too! They're built on top of <a href="https://sigstore.dev">Sigstore</a>
+                    Attestations are digitally signed, publicly verifiable statements about Python
+                    packages, including their <em>provenance</em> (e.g., the exact source repository
+                    that produced them).
+                </p>
+                <p>
+                    Attestations are built on top of <a href="https://sigstore.dev">Sigstore</a>
                     and use short-lived signing keys bound to trusted identities
                     (like <a href="https://docs.pypi.org/trusted-publishers/">Trusted Publishers</a>),
                     making them misuse-resistant and less susceptible to key loss and theft.
