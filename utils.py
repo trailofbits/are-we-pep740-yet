@@ -5,6 +5,8 @@ import pytz
 import requests_cache
 
 BASE_URL = "https://pypi.org/simple"
+# Provenance began to be persisted on 2024-10-03.
+ATTESTATION_ENABLEMENT = datetime.datetime(2024, 10, 3, tzinfo=datetime.timezone.utc)
 
 DEPRECATED_PACKAGES = {
     "BeautifulSoup",
@@ -32,6 +34,7 @@ def annotate_wheels(packages):
     for index, package in enumerate(packages):
         print(index + 1, num_packages, package["name"])
         has_provenance = False
+        latest_upload = None
         url = get_json_url(package["name"])
         response = SESSION.get(
             url, headers={"Accept": "application/vnd.pypi.simple.v1+json"}
@@ -45,6 +48,10 @@ def annotate_wheels(packages):
             if file.get("provenance", None):
                 has_provenance = True
 
+            upload_time = datetime.datetime.fromisoformat(file["upload-time"])
+            if not latest_upload or upload_time > latest_upload:
+                latest_upload = upload_time
+
         package["wheel"] = has_provenance
 
         # Display logic. I know, I'm sorry.
@@ -53,8 +60,14 @@ def annotate_wheels(packages):
             package["css_class"] = "success"
             package["icon"] = "🔏"
             package["title"] = "This package provides attestations."
-        else:
+        elif latest_upload < ATTESTATION_ENABLEMENT:
             package["css_class"] = "default"
+            package["icon"] = "⏰"
+            package["title"] = (
+                "This package was last uploaded before PEP 740 was enabled."
+            )
+        else:
+            package["css_class"] = "warning"
             package["icon"] = ""
             package["title"] = "This package doesn't provide attestations (yet!)"
 
