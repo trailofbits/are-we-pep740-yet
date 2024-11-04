@@ -1,10 +1,10 @@
 import datetime
 import json
+
 import pytz
 import requests_cache
 
-
-BASE_URL = "https://pypi.org/pypi"
+BASE_URL = "https://pypi.org/simple"
 
 DEPRECATED_PACKAGES = {
     "BeautifulSoup",
@@ -23,7 +23,7 @@ SESSION = requests_cache.CachedSession("requests-cache", expire_after=60 * 60)
 
 
 def get_json_url(package_name):
-    return BASE_URL + "/" + package_name + "/json"
+    return BASE_URL + "/" + package_name + "/"
 
 
 def annotate_wheels(packages):
@@ -31,44 +31,32 @@ def annotate_wheels(packages):
     num_packages = len(packages)
     for index, package in enumerate(packages):
         print(index + 1, num_packages, package["name"])
-        has_abi_none_wheel = False
-        has_free_threaded_wheel = False
+        has_provenance = False
         url = get_json_url(package["name"])
-        response = SESSION.get(url)
+        response = SESSION.get(
+            url, headers={"Accept": "application/vnd.pypi.simple.v1+json"}
+        )
         if response.status_code != 200:
             print(" ! Skipping " + package["name"])
             continue
         data = response.json()
 
-        for download in data["urls"]:
-            if download["packagetype"] == "bdist_wheel":
-                # The wheel filename is:
-                # {distribution}-{version}(-{build tag})?-{python tag}-{abi tag}-{platform tag}.whl
-                # https://packaging.python.org/en/latest/specifications/binary-distribution-format/#file-name-convention
-                abi_tag = download["filename"].removesuffix(".whl").split("-")[-2]
+        for file in data["files"]:
+            if file.get("provenance", None):
+                has_provenance = True
 
-                if abi_tag == "none":
-                    has_abi_none_wheel = True
-
-                if abi_tag.endswith("t") and abi_tag.startswith("cp31"):
-                    has_free_threaded_wheel = True
-
-        package["wheel"] = has_free_threaded_wheel or has_abi_none_wheel
+        package["wheel"] = has_provenance
 
         # Display logic. I know, I'm sorry.
         package["value"] = 1
-        if has_free_threaded_wheel:
+        if has_provenance:
             package["css_class"] = "success"
-            package["icon"] = "🧵"
-            package["title"] = "This package provides a free-threaded wheel."
-        elif has_abi_none_wheel:
-            package["css_class"] = "default"
-            package["icon"] = "🐍"
-            package["title"] = "This package provides pure Python wheels."
+            package["icon"] = "🔏"
+            package["title"] = "This package provides attestations."
         else:
-            package["css_class"] = "warning"
-            package["icon"] = "\u2717"  # Ballot X
-            package["title"] = "This package has no wheel archives uploaded (yet!)."
+            package["css_class"] = "default"
+            package["icon"] = ""
+            package["title"] = "This package doesn't provide attestations (yet!)"
 
 
 def get_top_packages():
