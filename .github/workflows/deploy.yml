@@ -1,5 +1,5 @@
 ---
-name: Deploy
+name: Deploy site
 
 on:
   push:
@@ -10,28 +10,28 @@ on:
     - cron: '0 10 * * *'  # Daily at 10AM UTC.
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   deploy:
     permissions:
-      contents: write
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Clone code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Install build dependencies
-        run: |
-          python -m pip install -r requirements.txt
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v3
 
       - name: Fetch latest packages data and build the website
-        run: |
-          make generate
+        run: make generate
 
       - name: Collect the built files
         run: |
@@ -41,7 +41,14 @@ jobs:
           cp wheel.svg build/
           cp results.json build/
 
-      - name: Deploy the built files
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          folder: build # The folder the action should deploy.
+          path: build
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
