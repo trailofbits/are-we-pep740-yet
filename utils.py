@@ -48,7 +48,9 @@ def annotate_wheels(packages):
             if file.get("provenance", None):
                 has_provenance = True
 
-            upload_time = datetime.datetime.fromisoformat(file["upload-time"])
+            upload_time = datetime.datetime.fromisoformat(
+                file["upload-time"].replace("Z", "+00:00")
+            )
             if not latest_upload or upload_time > latest_upload:
                 latest_upload = upload_time
 
