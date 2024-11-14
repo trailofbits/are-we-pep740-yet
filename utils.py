@@ -5,8 +5,9 @@ import pytz
 import requests_cache
 
 BASE_URL = "https://pypi.org/simple"
-# Provenance began to be persisted on 2024-10-03.
-ATTESTATION_ENABLEMENT = datetime.datetime(2024, 10, 3, tzinfo=datetime.timezone.utc)
+# Provenance began to be persisted on 2024-10-03
+# And `pypa/gh-action-pypi-publish` turned it automatically on 2024-10-29
+ATTESTATION_ENABLEMENT = datetime.datetime(2024, 10, 29, tzinfo=datetime.timezone.utc)
 
 DEPRECATED_PACKAGES = {
     "BeautifulSoup",
