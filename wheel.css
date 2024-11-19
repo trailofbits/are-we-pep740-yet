@@ -16,6 +16,12 @@
   fill: #ffffff;
 }
 
+.unsupported {
+  stroke: magenta;
+  stroke-width: 1;
+  fill: #ffffff;
+}
+
 line.wheel-line {
   stroke: #333;
 }
@@ -30,9 +36,11 @@ text.wheel-text {
     stroke-width: 1;
     fill: black;
   }
+
   line.wheel-line {
     stroke: #ccc;
   }
+
   text.wheel-text {
     fill: #ccc;
   }
