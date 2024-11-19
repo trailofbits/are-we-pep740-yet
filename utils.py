@@ -78,22 +78,22 @@ def annotate_wheels(packages):
             package["css_class"] = "success"
             package["icon"] = "🔏"
             package["title"] = "This package provides attestations."
+        elif not from_supported_publisher:
+            package["css_class"] = "unsupported"
+            package["icon"] = ""
+            package["title"] = (
+                "This package is published from a source that doesn't support attestations (yet!)"
+            )
         elif latest_upload < ATTESTATION_ENABLEMENT:
             package["css_class"] = "default"
             package["icon"] = "⏰"
             package["title"] = (
                 "This package was last uploaded before PEP 740 was enabled."
             )
-        elif from_supported_publisher:
+        else:
             package["css_class"] = "warning"
             package["icon"] = ""
             package["title"] = "This package doesn't provide attestations (yet!)"
-        else:
-            package["css_class"] = "unsupported"
-            package["icon"] = ""
-            package["title"] = (
-                "This package is published from a source that doesn't support attestations (yet!)"
-            )
 
 
 def get_top_packages():
