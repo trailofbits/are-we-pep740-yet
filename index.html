@@ -17,6 +17,9 @@
         .text-default {
             color: #777;
         }
+        .text-unsupported {
+          color: magenta;
+        }
         @media (prefers-color-scheme: dark) {
           body {
             color: #ccc;
@@ -37,6 +40,11 @@
           }
           .btn-default {
             color: #ccc;
+            background: black;
+            border-color: #222;
+          }
+          .btn-unsupported {
+            color: magenta;
             background: black;
             border-color: #222;
           }
@@ -80,9 +88,10 @@
                 <h2 id="about-list">What is this list?</h2>
                 <p>This site shows the top 360 most-downloaded packages on <a href="https://pypi.org/">PyPI</a> showing which have been uploaded with attestations.</p>
                 <ul>
-                    <li><span class="text-success">Green</span> packages <span id="success-percent"></span> with a 🔏 offer attestations for verification</li>
+                    <li><span class="text-success">Green</span> packages <span id="success-percent"></span> with a 🔏 offer attestations for their latest release</li>
                     <li><span class="text-default">Uncolored</span> packages <span id="default-percent"></span> with a ⏰ were last uploaded before attestations were available</li>
-                    <li><span class="text-warning">Yellow</span> packages <span id="todo-percent"></span> have no attestations uploaded (yet!)</li>
+                    <li><span class="text-warning">Yellow</span> packages <span id="todo-percent"></span> come from supported hosts, but have no attestations uploaded (yet!)</li>
+                    <li><span class="text-unsupported">Magenta</span> packages <span id="unsupported-percent"></span> come from source hosts that can't generate PEP 740 attestations (yet!)</li>
                 </ul>
                 <p>Packages that are known to be deprecated are not included (for example, distribute). If your package is incorrectly listed, please <a href="https://github.com/trailofbits/are-we-pep740-yet/issues/">create a ticket</a>.</p>
                 <h2 id="creating-wheels">My package is uncolored. What can I do?</h2>
@@ -139,10 +148,12 @@
             const successPercentage = (getPackageCount('success') / totalPackages) * 100;
             const defaultPercentage = (getPackageCount('default') / totalPackages) * 100;
             const todoPercentage = (getPackageCount('warning') / totalPackages) * 100;
+            const unsupportedPercentage = (getPackageCount('unsupported') / totalPackages) * 100;
 
             document.getElementById('success-percent').innerText = `(${successPercentage.toFixed(0)}%)`;
             document.getElementById('default-percent').innerText = `(${defaultPercentage.toFixed(0)}%)`;
             document.getElementById('todo-percent').innerText = `(${todoPercentage.toFixed(0)}%)`;
+            document.getElementById('unsupported-percent').innerText = `(${unsupportedPercentage.toFixed(0)}%)`;
             });
         });
     </script>

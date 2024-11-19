@@ -4,10 +4,12 @@ import json
 import pytz
 import requests_cache
 
-BASE_URL = "https://pypi.org/simple"
+BASE_URL = "https://pypi.org"
 # Provenance began to be persisted on 2024-10-03
 # And `pypa/gh-action-pypi-publish` turned it automatically on 2024-10-29
 ATTESTATION_ENABLEMENT = datetime.datetime(2024, 10, 29, tzinfo=datetime.timezone.utc)
+
+PUBLISHER_URLS = ("https://github.com", "http://github.com")
 
 DEPRECATED_PACKAGES = {
     "BeautifulSoup",
@@ -25,8 +27,12 @@ DEPRECATED_PACKAGES = {
 SESSION = requests_cache.CachedSession("requests-cache", expire_after=60 * 60)
 
 
-def get_json_url(package_name):
-    return BASE_URL + "/" + package_name + "/"
+def get_simple_url(package_name):
+    return f"{BASE_URL}/simple/{package_name}/"
+
+
+def get_json_url(package_name, version):
+    return f"{BASE_URL}/pypi/{package_name}/{version}/json"
 
 
 def annotate_wheels(packages):
@@ -36,19 +42,30 @@ def annotate_wheels(packages):
         print(index + 1, num_packages, package["name"])
         has_provenance = False
         latest_upload = None
-        url = get_json_url(package["name"])
-        response = SESSION.get(
+        from_supported_publisher = False
+        url = get_simple_url(package["name"])
+        simple_response = SESSION.get(
             url, headers={"Accept": "application/vnd.pypi.simple.v1+json"}
         )
-        if response.status_code != 200:
+        if simple_response.status_code != 200:
             print(" ! Skipping " + package["name"])
             continue
-        data = response.json()
+        simple = simple_response.json()
 
-        for file in data["files"]:
-            if file.get("provenance", None):
-                has_provenance = True
+        latest_file = simple["files"][-1]
+        if latest_file.get("provenance", None):
+            has_provenance = True
 
+        latest_version = simple["versions"][-1]
+        version_response = SESSION.get(get_json_url(package["name"], latest_version))
+        version_response.raise_for_status()
+        version_json = version_response.json()
+        project_urls = version_json["info"]["project_urls"] or {}
+        for url in project_urls.values():
+            if url.startswith(PUBLISHER_URLS):
+                from_supported_publisher = True
+
+        for file in simple["files"]:
             upload_time = datetime.datetime.fromisoformat(file["upload-time"])
             if not latest_upload or upload_time > latest_upload:
                 latest_upload = upload_time
@@ -67,10 +84,16 @@ def annotate_wheels(packages):
             package["title"] = (
                 "This package was last uploaded before PEP 740 was enabled."
             )
-        else:
+        elif from_supported_publisher:
             package["css_class"] = "warning"
             package["icon"] = ""
             package["title"] = "This package doesn't provide attestations (yet!)"
+        else:
+            package["css_class"] = "unsupported"
+            package["icon"] = ""
+            package["title"] = (
+                "This package is published from a source that doesn't support attestations (yet!)"
+            )
 
 
 def get_top_packages():
