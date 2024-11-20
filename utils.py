@@ -9,7 +9,12 @@ BASE_URL = "https://pypi.org"
 # And `pypa/gh-action-pypi-publish` turned it automatically on 2024-10-29
 ATTESTATION_ENABLEMENT = datetime.datetime(2024, 10, 29, tzinfo=datetime.timezone.utc)
 
-PUBLISHER_URLS = ("https://github.com", "http://github.com")
+PUBLISHER_URLS = (
+    "https://github.com",
+    "http://github.com",
+    "http://gitlab.com",
+    "https://gitlab.com",
+)
 
 DEPRECATED_PACKAGES = {
     "BeautifulSoup",
