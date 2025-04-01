@@ -1,3 +1,14 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "pre-commit==4.2.0",
+#     "pytz==2025.2",
+#     "requests==2.32.3",
+#     "requests-cache==1.2.1",
+# ]
+# ///
+
 from svg_wheel import generate_svg_wheel
 from utils import (
     annotate_wheels,
