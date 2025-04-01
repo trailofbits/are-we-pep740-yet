@@ -7,6 +7,7 @@ updates:
       interval: "monthly"
 
   # TODO: Dependabot does not support PEP 723 yet.
+  # See: https://github.com/dependabot/dependabot-core/issues/11946
   # # Maintain dependencies for Python
   # - package-ecosystem: "pip"
   #   directory: "/"
