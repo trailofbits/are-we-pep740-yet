@@ -94,7 +94,7 @@
                     <li><span class="text-unsupported">Magenta</span> packages <span id="unsupported-percent"></span> come from source hosts that can't generate PEP 740 attestations (yet!)</li>
                 </ul>
                 <p>Packages that are known to be deprecated are not included (for example, distribute). If your package is incorrectly listed, please <a href="https://github.com/trailofbits/are-we-pep740-yet/issues/">create a ticket</a>.</p>
-                <h2>I'm a user of Python packages. What can I do?</h2>
+                <h2 id="consuming-attestations">I'm a user of Python packages. What can I do?</h2>
                 <p>
                     We're currently working on integrating attestation verification into installers
                     like <code>pip</code> and <code>uv</code>. Once this happens, you won't need to
@@ -106,7 +106,7 @@
                     See the <a href="https://docs.pypi.org/attestations/consuming-attestations/">documentation on consuming attestations</a>
                     for additional information on using this API and verifying its responses.
                 </p>
-                <h2 id="creating-wheels">My package is uncolored. What can I do?</h2>
+                <h2 id="creating-attestations">My package is uncolored. What can I do?</h2>
                 <p>
                     Using a Trusted Publisher is the easiest way to enable attestations, since they come baked in!
                     See <a href="https://docs.pypi.org/trusted-publishers/adding-a-publisher/">the PyPI user docs</a>
