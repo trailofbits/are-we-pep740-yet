@@ -51,19 +51,6 @@ def annotate_wheels(packages):
         print(index + 1, num_packages, package["name"])
         has_provenance = False
         from_supported_publisher = False
-        url = get_simple_url(package["name"])
-        simple_response = SESSION.get(
-            url, headers={"Accept": "application/vnd.pypi.simple.v1+json"}
-        )
-        if simple_response.status_code != 200:
-            print(" ! Skipping " + package["name"])
-            continue
-        simple = simple_response.json()
-
-        non_yanked_files = [f for f in simple["files"] if not _is_yanked(f)]
-        if not non_yanked_files:
-            print(" ! Skipping " + package["name"] + " (all files yanked)")
-            continue
 
         json_response = SESSION.get(get_json_url(package["name"]))
         json_response.raise_for_status()
@@ -74,13 +61,23 @@ def annotate_wheels(packages):
             if url.startswith(PUBLISHER_URLS):
                 from_supported_publisher = True
 
-        # Use only files belonging to the latest stable version (from the JSON API)
-        # so that pre-release files don't affect provenance or upload time.
         stable_filenames = {
             f["filename"] for f in json_data["releases"][info["version"]]
         }
+
+        simple_response = SESSION.get(
+            get_simple_url(package["name"]),
+            headers={"Accept": "application/vnd.pypi.simple.v1+json"},
+        )
+        if simple_response.status_code != 200:
+            print(" ! Skipping " + package["name"])
+            continue
+        simple = simple_response.json()
+
         stable_files = [
-            f for f in non_yanked_files if f["filename"] in stable_filenames
+            f
+            for f in simple["files"]
+            if f["filename"] in stable_filenames and not _is_yanked(f)
         ]
         if not stable_files:
             print(" ! Skipping " + package["name"] + " (no stable files)")
