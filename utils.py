@@ -40,10 +40,6 @@ def get_json_url(package_name):
     return f"{BASE_URL}/pypi/{package_name}/json"
 
 
-def _is_yanked(file):
-    return bool(file.get("yanked"))
-
-
 def annotate_wheels(packages):
     print("Getting wheel data...")
     num_packages = len(packages)
@@ -62,6 +58,7 @@ def annotate_wheels(packages):
                 from_supported_publisher = True
                 break
 
+        # info["version"] is what PyPI considers the latest stable release.
         stable_filenames = {
             f["filename"] for f in json_data["releases"][info["version"]]
         }
@@ -78,7 +75,7 @@ def annotate_wheels(packages):
         stable_files = [
             f
             for f in simple["files"]
-            if f["filename"] in stable_filenames and not _is_yanked(f)
+            if f["filename"] in stable_filenames
         ]
         if not stable_files:
             print(" ! Skipping " + package["name"] + " (no stable files)")
