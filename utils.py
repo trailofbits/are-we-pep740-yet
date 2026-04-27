@@ -60,6 +60,7 @@ def annotate_wheels(packages):
         for url in project_urls.values():
             if url.startswith(PUBLISHER_URLS):
                 from_supported_publisher = True
+                break
 
         stable_filenames = {
             f["filename"] for f in json_data["releases"][info["version"]]
