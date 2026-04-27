@@ -65,20 +65,32 @@ def annotate_wheels(packages):
             print(" ! Skipping " + package["name"] + " (all files yanked)")
             continue
 
-        latest_file = non_yanked_files[-1]
-        if latest_file.get("provenance", None):
-            has_provenance = True
-
         json_response = SESSION.get(get_json_url(package["name"]))
         json_response.raise_for_status()
-        info = json_response.json()["info"]
+        json_data = json_response.json()
+        info = json_data["info"]
         project_urls = info["project_urls"] or {}
         for url in project_urls.values():
             if url.startswith(PUBLISHER_URLS):
                 from_supported_publisher = True
 
+        # Use only files belonging to the latest stable version (from the JSON API)
+        # so that pre-release files don't affect provenance or upload time.
+        stable_filenames = {
+            f["filename"] for f in json_data["releases"][info["version"]]
+        }
+        stable_files = [
+            f for f in non_yanked_files if f["filename"] in stable_filenames
+        ]
+        if not stable_files:
+            print(" ! Skipping " + package["name"] + " (no stable files)")
+            continue
+
+        if stable_files[-1].get("provenance", None):
+            has_provenance = True
+
         latest_upload = max(
-            datetime.datetime.fromisoformat(f["upload-time"]) for f in non_yanked_files
+            datetime.datetime.fromisoformat(f["upload-time"]) for f in stable_files
         )
 
         package["wheel"] = has_provenance
