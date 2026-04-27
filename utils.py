@@ -36,8 +36,8 @@ def get_simple_url(package_name):
     return f"{BASE_URL}/simple/{package_name}/"
 
 
-def get_json_url(package_name, version):
-    return f"{BASE_URL}/pypi/{package_name}/{version}/json"
+def get_json_url(package_name):
+    return f"{BASE_URL}/pypi/{package_name}/json"
 
 
 def annotate_wheels(packages):
@@ -46,34 +46,47 @@ def annotate_wheels(packages):
     for index, package in enumerate(packages):
         print(index + 1, num_packages, package["name"])
         has_provenance = False
-        latest_upload = None
         from_supported_publisher = False
-        url = get_simple_url(package["name"])
+
+        json_response = SESSION.get(get_json_url(package["name"]))
+        json_response.raise_for_status()
+        json_data = json_response.json()
+        info = json_data["info"]
+        project_urls = info["project_urls"] or {}
+        for url in project_urls.values():
+            if url.startswith(PUBLISHER_URLS):
+                from_supported_publisher = True
+                break
+
+        # info["version"] is what PyPI considers the latest stable release.
+        stable_filenames = {
+            f["filename"] for f in json_data["releases"][info["version"]]
+        }
+
         simple_response = SESSION.get(
-            url, headers={"Accept": "application/vnd.pypi.simple.v1+json"}
+            get_simple_url(package["name"]),
+            headers={"Accept": "application/vnd.pypi.simple.v1+json"},
         )
         if simple_response.status_code != 200:
             print(" ! Skipping " + package["name"])
             continue
         simple = simple_response.json()
 
-        latest_file = simple["files"][-1]
-        if latest_file.get("provenance", None):
+        stable_files = [
+            f
+            for f in simple["files"]
+            if f["filename"] in stable_filenames
+        ]
+        if not stable_files:
+            print(" ! Skipping " + package["name"] + " (no stable files)")
+            continue
+
+        if stable_files[-1].get("provenance", None):
             has_provenance = True
 
-        latest_version = simple["versions"][-1]
-        version_response = SESSION.get(get_json_url(package["name"], latest_version))
-        version_response.raise_for_status()
-        version_json = version_response.json()
-        project_urls = version_json["info"]["project_urls"] or {}
-        for url in project_urls.values():
-            if url.startswith(PUBLISHER_URLS):
-                from_supported_publisher = True
-
-        for file in simple["files"]:
-            upload_time = datetime.datetime.fromisoformat(file["upload-time"])
-            if not latest_upload or upload_time > latest_upload:
-                latest_upload = upload_time
+        latest_upload = max(
+            datetime.datetime.fromisoformat(f["upload-time"]) for f in stable_files
+        )
 
         package["wheel"] = has_provenance
 
